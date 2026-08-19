@@ -25,7 +25,6 @@
     min-height: 100vh;
   }
 
-  /* Login */
   .login-screen {
     display: flex;
     align-items: center;
@@ -112,7 +111,6 @@
     text-align: center;
   }
 
-  /* Admin Panel */
   .admin-panel {
     display: none;
   }
@@ -142,11 +140,6 @@
     border-radius: 6px;
     font-size: 0.75rem;
     cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .logout-btn:hover {
-    background: rgba(220,38,38,0.3);
   }
 
   main {
@@ -170,10 +163,8 @@
     color: var(--muted);
     font-family: inherit;
     font-size: 0.9rem;
-    letter-spacing: 0.05em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: color 0.2s;
     border-bottom: 2px solid transparent;
   }
 
@@ -201,7 +192,6 @@
   .form-section h3 {
     font-size: 1rem;
     margin-bottom: 20px;
-    letter-spacing: 0.05em;
   }
 
   .form-grid {
@@ -218,16 +208,10 @@
     font-family: Rajdhani, sans-serif;
     font-weight: 700;
     font-size: 0.85rem;
-    letter-spacing: 0.1em;
     text-transform: uppercase;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: opacity 0.2s;
-  }
-
-  .submit-btn:hover {
-    opacity: 0.8;
   }
 
   .status-message {
@@ -250,7 +234,6 @@
   .items-list {
     background: var(--surface);
     border-radius: 8px;
-    overflow: hidden;
   }
 
   .item {
@@ -283,17 +266,11 @@
     border-radius: 6px;
     font-size: 0.7rem;
     cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .delete-btn:hover {
-    background: rgba(220,38,38,0.3);
   }
 </style>
 </head>
 <body>
 
-<!-- Login -->
 <div id="loginScreen" class="login-screen">
   <div class="login-box">
     <div class="login-title">Admin Panel</div>
@@ -308,7 +285,6 @@
   </div>
 </div>
 
-<!-- Admin Panel -->
 <div id="adminPanel" class="admin-panel">
   <header>
     <div class="header-title">🔧 Admin Panel</div>
@@ -322,7 +298,6 @@
       <button class="tab" onclick="switchTab('livestatus')">Live Status</button>
     </div>
 
-    <!-- Events Tab -->
     <div id="events" class="tab-content active">
       <div class="form-section">
         <h3>Neues Event</h3>
@@ -350,7 +325,6 @@
       </div>
     </div>
 
-    <!-- Streaming Plan Tab -->
     <div id="streaming" class="tab-content">
       <div class="form-section">
         <h3>Streaming hinzufügen</h3>
@@ -366,7 +340,7 @@
           </select>
           <input type="time" id="streamTime" class="form-input" />
           <input type="text" id="streamGame" class="form-input" placeholder="Spiel" />
-          <input type="text" id="streamPlatform" class="form-input" placeholder="Plattform (Twitch/TikTok)" />
+          <input type="text" id="streamPlatform" class="form-input" placeholder="Plattform" />
         </div>
         <button class="submit-btn" onclick="addNewStream()">Stream hinzufügen →</button>
         <div id="streamStatus" class="status-message" style="display:none;"></div>
@@ -378,7 +352,6 @@
       </div>
     </div>
 
-    <!-- Live Status Tab -->
     <div id="livestatus" class="tab-content">
       <div class="form-section">
         <h3>Twitch Live Status</h3>
@@ -393,10 +366,10 @@
   </main>
 </div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"></script>
 
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyCGZTtokmCpu9CTDRWOi5HHO4CGO-BZgGU",
   authDomain: "adminpannel-f0aab.firebaseapp.com",
@@ -406,13 +379,12 @@ const firebaseConfig = {
   appId: "1:373454919812:web:281bd757fb982bb24f4ad1"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 const MASTER_PASSWORD = "MrN@w1th_Gh0$t_2k25!";
 let isLoggedIn = false;
 
-// Login
 document.getElementById('loginForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const password = document.getElementById('loginPassword').value;
@@ -429,7 +401,6 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
   }
 });
 
-// Check auf Reload
 if (sessionStorage.getItem('adminLoggedIn') === 'true') {
   isLoggedIn = true;
   document.getElementById('loginScreen').style.display = 'none';
@@ -438,21 +409,19 @@ if (sessionStorage.getItem('adminLoggedIn') === 'true') {
   loadStreams();
 }
 
-// Logout
-window.logout = () => {
+function logout() {
   isLoggedIn = false;
   sessionStorage.removeItem('adminLoggedIn');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('adminPanel').style.display = 'none';
   document.getElementById('loginForm').reset();
-};
+}
 
-// Events
 async function addNewEvent() {
   if (!isLoggedIn) return;
   
   try {
-    await addDoc(collection(db, 'events'), {
+    await db.collection('events').add({
       title: document.getElementById('eventTitle').value,
       type: document.getElementById('eventType').value,
       eventDate: new Date(document.getElementById('eventDate').value).toISOString(),
@@ -472,34 +441,34 @@ async function addNewEvent() {
 }
 
 async function loadEvents() {
-  const events = await getDocs(collection(db, 'events'));
-  const html = events.docs.map(doc => `
-    <div class="item">
-      <div class="item-info">
-        <h4>${doc.data().title}</h4>
-        <p>${doc.data().type} • ${new Date(doc.data().eventDate).toLocaleDateString('de-DE')}</p>
-      </div>
-      <div>
+  try {
+    const snap = await db.collection('events').get();
+    const html = snap.docs.map(doc => `
+      <div class="item">
+        <div class="item-info">
+          <h4>${doc.data().title}</h4>
+          <p>${doc.data().type} • ${new Date(doc.data().eventDate).toLocaleDateString('de-DE')}</p>
+        </div>
         <button class="delete-btn" onclick="deleteEvent('${doc.id}')">Löschen</button>
       </div>
-    </div>
-  `).join('');
-  document.getElementById('eventsList').innerHTML = html || '<p style="padding: 16px; color: var(--muted);">Keine Events</p>';
+    `).join('');
+    document.getElementById('eventsList').innerHTML = html || '<p style="padding: 16px; color: var(--muted);">Keine Events</p>';
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-window.deleteEvent = async (id) => {
+function deleteEvent(id) {
   if (confirm('Wirklich löschen?')) {
-    await deleteDoc(doc(db, 'events', id));
-    loadEvents();
+    db.collection('events').doc(id).delete().then(() => loadEvents());
   }
-};
+}
 
-// Streaming
 async function addNewStream() {
   if (!isLoggedIn) return;
   
   try {
-    await addDoc(collection(db, 'streamingplan'), {
+    await db.collection('streamingplan').add({
       day: document.getElementById('streamDay').value,
       time: document.getElementById('streamTime').value,
       game: document.getElementById('streamGame').value,
@@ -517,34 +486,34 @@ async function addNewStream() {
 }
 
 async function loadStreams() {
-  const streams = await getDocs(collection(db, 'streamingplan'));
-  const html = streams.docs.map(doc => `
-    <div class="item">
-      <div class="item-info">
-        <h4>${doc.data().day} • ${doc.data().time}</h4>
-        <p>${doc.data().game} • ${doc.data().platform}</p>
-      </div>
-      <div>
+  try {
+    const snap = await db.collection('streamingplan').get();
+    const html = snap.docs.map(doc => `
+      <div class="item">
+        <div class="item-info">
+          <h4>${doc.data().day} • ${doc.data().time}</h4>
+          <p>${doc.data().game} • ${doc.data().platform}</p>
+        </div>
         <button class="delete-btn" onclick="deleteStream('${doc.id}')">Löschen</button>
       </div>
-    </div>
-  `).join('');
-  document.getElementById('streamList').innerHTML = html || '<p style="padding: 16px; color: var(--muted);">Kein Streaming Plan</p>';
+    `).join('');
+    document.getElementById('streamList').innerHTML = html || '<p style="padding: 16px; color: var(--muted);">Kein Streaming Plan</p>';
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-window.deleteStream = async (id) => {
+function deleteStream(id) {
   if (confirm('Wirklich löschen?')) {
-    await deleteDoc(doc(db, 'streamingplan', id));
-    loadStreams();
+    db.collection('streamingplan').doc(id).delete().then(() => loadStreams());
   }
-};
+}
 
-// Live Status
-window.setLiveStatus = async (isLive) => {
+async function setLiveStatus(isLive) {
   if (!isLoggedIn) return;
   
   try {
-    await setDoc(doc(db, 'status', 'twitch'), {
+    await db.collection('status').doc('twitch').set({
       isLive: isLive,
       updatedAt: new Date(),
       updatedBy: 'admin'
@@ -553,9 +522,8 @@ window.setLiveStatus = async (isLive) => {
   } catch (error) {
     showStatus('liveStatus', '✗ Fehler: ' + error.message, 'error');
   }
-};
+}
 
-// Utils
 function showStatus(elementId, message, type) {
   const el = document.getElementById(elementId);
   el.textContent = message;
@@ -564,12 +532,12 @@ function showStatus(elementId, message, type) {
   setTimeout(() => el.style.display = 'none', 3000);
 }
 
-window.switchTab = (tabName) => {
+function switchTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
   document.getElementById(tabName).classList.add('active');
   event.target.classList.add('active');
-};
+}
 </script>
 
 </body>
