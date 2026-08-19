@@ -488,11 +488,16 @@ async function addNewStream() {
 async function loadStreams() {
   try {
     const snap = await db.collection('streamingplan').get();
-    const html = snap.docs.map(doc => `
+    const days = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+    
+    let streams = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    streams.sort((a, b) => days.indexOf(a.day) - days.indexOf(b.day));
+    
+    const html = streams.map(doc => `
       <div class="item">
         <div class="item-info">
-          <h4>${doc.data().day} • ${doc.data().time}</h4>
-          <p>${doc.data().game} • ${doc.data().platform}</p>
+          <h4>${doc.day} • ${doc.time}</h4>
+          <p>${doc.game} • ${doc.platform}</p>
         </div>
         <button class="delete-btn" onclick="deleteStream('${doc.id}')">Löschen</button>
       </div>
