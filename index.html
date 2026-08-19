@@ -340,7 +340,7 @@
           <input type="text" id="eventPrize" class="form-input" placeholder="Prize Pool" />
         </div>
         <textarea id="eventDesc" class="form-input" placeholder="Beschreibung" style="grid-column: 1/-1; min-height: 80px;"></textarea>
-        <button class="submit-btn" onclick="createEvent()">Event erstellen →</button>
+        <button class="submit-btn" onclick="addNewEvent()">Event erstellen →</button>
         <div id="eventStatus" class="status-message" style="display:none;"></div>
       </div>
 
@@ -368,7 +368,7 @@
           <input type="text" id="streamGame" class="form-input" placeholder="Spiel" />
           <input type="text" id="streamPlatform" class="form-input" placeholder="Plattform (Twitch/TikTok)" />
         </div>
-        <button class="submit-btn" onclick="createStream()">Stream hinzufügen →</button>
+        <button class="submit-btn" onclick="addNewStream()">Stream hinzufügen →</button>
         <div id="streamStatus" class="status-message" style="display:none;"></div>
       </div>
 
@@ -448,7 +448,7 @@ window.logout = () => {
 };
 
 // Events
-async function createEvent() {
+async function addNewEvent() {
   if (!isLoggedIn) return;
   
   try {
@@ -495,7 +495,7 @@ window.deleteEvent = async (id) => {
 };
 
 // Streaming
-async function createStream() {
+async function addNewStream() {
   if (!isLoggedIn) return;
   
   try {
