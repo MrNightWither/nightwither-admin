@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel – NightWither</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline'; connect-src https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://adminpannel-f0aab.firebaseapp.com https://accounts.google.com; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Admin Panel NightWither</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   
@@ -21,7 +23,7 @@
   body {
     background: #000000;
     color: var(--text);
-    font-family: 'Inter', sans-serif;
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
   }
 
@@ -43,7 +45,7 @@
   }
 
   .login-title {
-    font-family: Rajdhani, sans-serif;
+    font-family: Rajdhani, 'Arial Narrow', system-ui, sans-serif;
     font-weight: 700;
     font-size: 1.5rem;
     letter-spacing: 0.1em;
@@ -88,7 +90,7 @@
     padding: 12px;
     background: var(--gold);
     color: #000;
-    font-family: Rajdhani, sans-serif;
+    font-family: Rajdhani, 'Arial Narrow', system-ui, sans-serif;
     font-weight: 700;
     font-size: 0.9rem;
     letter-spacing: 0.1em;
@@ -125,7 +127,7 @@
   }
 
   .header-title {
-    font-family: Rajdhani, sans-serif;
+    font-family: Rajdhani, 'Arial Narrow', system-ui, sans-serif;
     font-weight: 700;
     font-size: 1.1rem;
     letter-spacing: 0.1em;
@@ -205,7 +207,7 @@
     padding: 12px 24px;
     background: var(--gold);
     color: #000;
-    font-family: Rajdhani, sans-serif;
+    font-family: Rajdhani, 'Arial Narrow', system-ui, sans-serif;
     font-weight: 700;
     font-size: 0.85rem;
     text-transform: uppercase;
@@ -267,6 +269,17 @@
     font-size: 0.7rem;
     cursor: pointer;
   }
+
+  .form-input + .form-input { margin-top: 0; }
+  textarea.form-input { min-height: 80px; margin-bottom: 20px; }
+  .muted { color: var(--muted); padding: 16px; }
+  .hint { margin-bottom: 16px; color: var(--muted); }
+  .live-row { display: flex; gap: 10px; }
+  .btn-live { background: rgba(34,197,94,0.8); }
+  .btn-offline { background: rgba(107,114,128,0.8); }
+  .list-title { margin-bottom: 16px; }
+  .hidden { display: none; }
+  button:focus-visible, .form-input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -274,35 +287,29 @@
 <div id="loginScreen" class="login-screen">
   <div class="login-box">
     <div class="login-title">Admin Panel</div>
-    <form id="loginForm">
-      <div class="form-group">
-        <label class="form-label">Master Passwort</label>
-        <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required />
-      </div>
-      <button type="submit" class="login-btn">Login →</button>
-      <div id="loginError" class="login-error"></div>
-    </form>
+    <button type="button" id="googleLoginBtn" class="login-btn">Mit Google anmelden</button>
+    <div id="loginError" class="login-error" role="alert"></div>
   </div>
 </div>
 
 <div id="adminPanel" class="admin-panel">
   <header>
     <div class="header-title">🔧 Admin Panel</div>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <button class="logout-btn" id="logoutBtn" type="button">Abmelden</button>
   </header>
 
   <main>
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('events')">Events</button>
-      <button class="tab" onclick="switchTab('streaming')">Streaming Plan</button>
-      <button class="tab" onclick="switchTab('livestatus')">Live Status</button>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="events" type="button">Events</button>
+      <button class="tab" data-tab="streaming" type="button">Streaming Plan</button>
+      <button class="tab" data-tab="livestatus" type="button">Live Status</button>
     </div>
 
     <div id="events" class="tab-content active">
       <div class="form-section">
         <h3>Neues Event</h3>
         <div class="form-grid">
-          <input type="text" id="eventTitle" class="form-input" placeholder="Event Titel" />
+          <input type="text" id="eventTitle" class="form-input" placeholder="Event Titel" maxlength="120" />
           <select id="eventType" class="form-input">
             <option value="tournament">Tournament</option>
             <option value="verlosung">Verlosung</option>
@@ -312,42 +319,35 @@
             <option value="sonstiges">Sonstiges</option>
           </select>
           <input type="datetime-local" id="eventDate" class="form-input" />
-          <input type="text" id="eventPrize" class="form-input" placeholder="Prize Pool" />
+          <input type="text" id="eventPrize" class="form-input" placeholder="Prize Pool" maxlength="120" />
         </div>
-        <textarea id="eventDesc" class="form-input" placeholder="Beschreibung" style="grid-column: 1/-1; min-height: 80px;"></textarea>
-        <button class="submit-btn" onclick="addNewEvent()">Event erstellen →</button>
-        <div id="eventStatus" class="status-message" style="display:none;"></div>
+        <textarea id="eventDesc" class="form-input" placeholder="Beschreibung" maxlength="2000"></textarea>
+        <button class="submit-btn" id="addEventBtn" type="button">Event erstellen</button>
+        <div id="eventStatus" class="status-message hidden" role="status"></div>
       </div>
-
       <div>
-        <h3 style="margin-bottom: 16px;">Aktuelle Events</h3>
+        <h3 class="list-title">Aktuelle Events</h3>
         <div id="eventsList" class="items-list"></div>
       </div>
     </div>
 
     <div id="streaming" class="tab-content">
       <div class="form-section">
-        <h3>Streaming hinzufügen</h3>
+        <h3>Stream hinzufügen</h3>
         <div class="form-grid">
           <select id="streamDay" class="form-input">
-            <option value="Montag">Montag</option>
-            <option value="Dienstag">Dienstag</option>
-            <option value="Mittwoch">Mittwoch</option>
-            <option value="Donnerstag">Donnerstag</option>
-            <option value="Freitag">Freitag</option>
-            <option value="Samstag">Samstag</option>
-            <option value="Sonntag">Sonntag</option>
+            <option>Montag</option><option>Dienstag</option><option>Mittwoch</option>
+            <option>Donnerstag</option><option>Freitag</option><option>Samstag</option><option>Sonntag</option>
           </select>
           <input type="time" id="streamTime" class="form-input" />
-          <input type="text" id="streamGame" class="form-input" placeholder="Spiel" />
-          <input type="text" id="streamPlatform" class="form-input" placeholder="Plattform" />
+          <input type="text" id="streamGame" class="form-input" placeholder="Spiel" maxlength="80" />
+          <input type="text" id="streamPlatform" class="form-input" placeholder="Plattform" maxlength="40" />
         </div>
-        <button class="submit-btn" onclick="addNewStream()">Stream hinzufügen →</button>
-        <div id="streamStatus" class="status-message" style="display:none;"></div>
+        <button class="submit-btn" id="addStreamBtn" type="button">Stream hinzufügen</button>
+        <div id="streamStatus" class="status-message hidden" role="status"></div>
       </div>
-
       <div>
-        <h3 style="margin-bottom: 16px;">Streaming Plan</h3>
+        <h3 class="list-title">Streaming Plan</h3>
         <div id="streamList" class="items-list"></div>
       </div>
     </div>
@@ -355,195 +355,20 @@
     <div id="livestatus" class="tab-content">
       <div class="form-section">
         <h3>Twitch Live Status</h3>
-        <p style="margin-bottom: 16px; color: var(--muted);">Wird automatisch von Streamer.bot aktualisiert</p>
-        <div style="display: flex; gap: 10px;">
-          <button class="submit-btn" onclick="setLiveStatus(true)" style="background: rgba(34,197,94,0.8);">🔴 LIVE</button>
-          <button class="submit-btn" onclick="setLiveStatus(false)" style="background: rgba(107,114,128,0.8);">⚪ OFFLINE</button>
+        <p class="hint">Wird automatisch von Streamer.bot aktualisiert</p>
+        <div class="live-row">
+          <button class="submit-btn btn-live" id="liveOnBtn" type="button">🔴 LIVE</button>
+          <button class="submit-btn btn-offline" id="liveOffBtn" type="button">⚪ OFFLINE</button>
         </div>
-        <div id="liveStatus" class="status-message" style="display:none; margin-top: 16px;"></div>
+        <div id="liveStatus" class="status-message hidden" role="status"></div>
       </div>
     </div>
   </main>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCGZTtokmCpu9CTDRWOi5HHO4CGO-BZgGU",
-  authDomain: "adminpannel-f0aab.firebaseapp.com",
-  projectId: "adminpannel-f0aab",
-  storageBucket: "adminpannel-f0aab.firebasestorage.app",
-  messagingSenderId: "373454919812",
-  appId: "1:373454919812:web:281bd757fb982bb24f4ad1"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-const MASTER_PASSWORD = "MrN@w1th_Gh0$t_2k25!";
-let isLoggedIn = false;
-
-document.getElementById('loginForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const password = document.getElementById('loginPassword').value;
-  
-  if (password === MASTER_PASSWORD) {
-    isLoggedIn = true;
-    sessionStorage.setItem('adminLoggedIn', 'true');
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-    loadEvents();
-    loadStreams();
-  } else {
-    document.getElementById('loginError').textContent = 'Passwort falsch!';
-  }
-});
-
-if (sessionStorage.getItem('adminLoggedIn') === 'true') {
-  isLoggedIn = true;
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('adminPanel').style.display = 'block';
-  loadEvents();
-  loadStreams();
-}
-
-function logout() {
-  isLoggedIn = false;
-  sessionStorage.removeItem('adminLoggedIn');
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('adminPanel').style.display = 'none';
-  document.getElementById('loginForm').reset();
-}
-
-async function addNewEvent() {
-  if (!isLoggedIn) return;
-  
-  try {
-    await db.collection('events').add({
-      title: document.getElementById('eventTitle').value,
-      type: document.getElementById('eventType').value,
-      eventDate: new Date(document.getElementById('eventDate').value).toISOString(),
-      prizePool: document.getElementById('eventPrize').value,
-      description: document.getElementById('eventDesc').value,
-      createdAt: new Date()
-    });
-    
-    showStatus('eventStatus', '✓ Event erstellt!', 'success');
-    document.getElementById('eventTitle').value = '';
-    document.getElementById('eventPrize').value = '';
-    document.getElementById('eventDesc').value = '';
-    loadEvents();
-  } catch (error) {
-    showStatus('eventStatus', '✗ Fehler: ' + error.message, 'error');
-  }
-}
-
-async function loadEvents() {
-  try {
-    const snap = await db.collection('events').get();
-    const html = snap.docs.map(doc => `
-      <div class="item">
-        <div class="item-info">
-          <h4>${doc.data().title}</h4>
-          <p>${doc.data().type} • ${new Date(doc.data().eventDate).toLocaleDateString('de-DE')}</p>
-        </div>
-        <button class="delete-btn" onclick="deleteEvent('${doc.id}')">Löschen</button>
-      </div>
-    `).join('');
-    document.getElementById('eventsList').innerHTML = html || '<p style="padding: 16px; color: var(--muted);">Keine Events</p>';
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-function deleteEvent(id) {
-  if (confirm('Wirklich löschen?')) {
-    db.collection('events').doc(id).delete().then(() => loadEvents());
-  }
-}
-
-async function addNewStream() {
-  if (!isLoggedIn) return;
-  
-  try {
-    await db.collection('streamingplan').add({
-      day: document.getElementById('streamDay').value,
-      time: document.getElementById('streamTime').value,
-      game: document.getElementById('streamGame').value,
-      platform: document.getElementById('streamPlatform').value,
-      createdAt: new Date()
-    });
-    
-    showStatus('streamStatus', '✓ Stream hinzugefügt!', 'success');
-    document.getElementById('streamGame').value = '';
-    document.getElementById('streamPlatform').value = '';
-    loadStreams();
-  } catch (error) {
-    showStatus('streamStatus', '✗ Fehler: ' + error.message, 'error');
-  }
-}
-
-async function loadStreams() {
-  try {
-    const snap = await db.collection('streamingplan').get();
-    const days = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
-    
-    let streams = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-    streams.sort((a, b) => days.indexOf(a.day) - days.indexOf(b.day));
-    
-    const html = streams.map(doc => `
-      <div class="item">
-        <div class="item-info">
-          <h4>${doc.day} • ${doc.time}</h4>
-          <p>${doc.game} • ${doc.platform}</p>
-        </div>
-        <button class="delete-btn" onclick="deleteStream('${doc.id}')">Löschen</button>
-      </div>
-    `).join('');
-    document.getElementById('streamList').innerHTML = html || '<p style="padding: 16px; color: var(--muted);">Kein Streaming Plan</p>';
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-function deleteStream(id) {
-  if (confirm('Wirklich löschen?')) {
-    db.collection('streamingplan').doc(id).delete().then(() => loadStreams());
-  }
-}
-
-async function setLiveStatus(isLive) {
-  if (!isLoggedIn) return;
-  
-  try {
-    await db.collection('status').doc('twitch').set({
-      isLive: isLive,
-      updatedAt: new Date(),
-      updatedBy: 'admin'
-    });
-    showStatus('liveStatus', isLive ? '✓ 🔴 LIVE!' : '✓ ⚪ OFFLINE!', 'success');
-  } catch (error) {
-    showStatus('liveStatus', '✗ Fehler: ' + error.message, 'error');
-  }
-}
-
-function showStatus(elementId, message, type) {
-  const el = document.getElementById(elementId);
-  el.textContent = message;
-  el.className = `status-message ${type}`;
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 3000);
-}
-
-function switchTab(tabName) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-  document.getElementById(tabName).classList.add('active');
-  event.target.classList.add('active');
-}
-</script>
-
+<script src="admin.js"></script>
 </body>
 </html>
