@@ -312,6 +312,7 @@
       <button class="tab active" data-tab="events" type="button">Events</button>
       <button class="tab" data-tab="streaming" type="button">Streaming Plan</button>
       <button class="tab" data-tab="livestatus" type="button">Live Status</button>
+      <button class="tab" data-tab="kooperation" type="button">Kooperation</button>
     </div>
 
     <div id="events" class="tab-content active">
@@ -370,6 +371,37 @@
           <button class="submit-btn btn-offline" id="liveOffBtn" type="button">⚪ OFFLINE</button>
         </div>
         <div id="liveStatus" class="status-message hidden" role="status"></div>
+      </div>
+    </div>
+    <div id="kooperation" class="tab-content">
+      <div class="form-section">
+        <h3>Reichweite auf der Kooperationsseite</h3>
+        <p class="hint">Leere Felder werden auf der Seite nicht angezeigt. Beispiel: 760+ oder 1,2k</p>
+        <div class="form-grid">
+          <input type="text" id="statTiktok" class="form-input" placeholder="TikTok" maxlength="12" />
+          <input type="text" id="statTwitch" class="form-input" placeholder="Twitch" maxlength="12" />
+          <input type="text" id="statYoutube" class="form-input" placeholder="YouTube" maxlength="12" />
+          <input type="text" id="statInstagram" class="form-input" placeholder="Instagram" maxlength="12" />
+        </div>
+        <button class="submit-btn" id="saveStatsBtn" type="button">Zahlen speichern</button>
+        <div id="statsStatus" class="status-message hidden" role="status"></div>
+      </div>
+
+      <div class="form-section">
+        <h3>Neuer Partner</h3>
+        <div class="form-grid">
+          <input type="text" id="partnerName" class="form-input" placeholder="Name" maxlength="80" />
+          <input type="text" id="partnerCategory" class="form-input" placeholder="Kategorie, z.B. Streamer" maxlength="60" />
+          <input type="url" id="partnerUrl" class="form-input" placeholder="Link (https://...)" maxlength="300" />
+          <input type="url" id="partnerLogo" class="form-input" placeholder="Logo Bildlink (https://..., optional)" maxlength="300" />
+        </div>
+        <button class="submit-btn" id="addPartnerBtn" type="button">Partner hinzufügen</button>
+        <div id="partnerStatus" class="status-message hidden" role="status"></div>
+      </div>
+
+      <div>
+        <h3 class="list-title">Aktive Partner</h3>
+        <div id="partnerList" class="items-list"></div>
       </div>
     </div>
   </main>

@@ -50,6 +50,8 @@ auth.onAuthStateChanged((user) => {
     $('adminPanel').style.display = 'block';
     loadEvents();
     loadStreams();
+    loadStats();
+    loadPartners();
   } else {
     if (user) {
       const uid = user.uid;
@@ -61,6 +63,7 @@ auth.onAuthStateChanged((user) => {
     $('loginScreen').style.display = 'flex';
     $('eventsList').replaceChildren();
     $('streamList').replaceChildren();
+    $('partnerList').replaceChildren();
   }
 });
 
@@ -224,6 +227,81 @@ async function setLiveStatus(isLive) {
 }
 $('liveOnBtn').addEventListener('click', () => setLiveStatus(true));
 $('liveOffBtn').addEventListener('click', () => setLiveStatus(false));
+
+// ---------- Kooperation: Reichweite ----------
+const STAT_FIELDS = { tiktok: 'statTiktok', twitch: 'statTwitch', youtube: 'statYoutube', instagram: 'statInstagram' };
+
+async function loadStats() {
+  try {
+    const doc = await db.collection('stats').doc('social').get();
+    const d = doc.exists ? doc.data() : {};
+    for (const [key, id] of Object.entries(STAT_FIELDS)) $(id).value = d[key] || '';
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+$('saveStatsBtn').addEventListener('click', async () => {
+  const data = { updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+  for (const [key, id] of Object.entries(STAT_FIELDS)) data[key] = $(id).value.trim().slice(0, 12);
+  try {
+    await db.collection('stats').doc('social').set(data);
+    showStatus('statsStatus', '✓ Zahlen gespeichert', 'success');
+  } catch (err) {
+    console.error(err);
+    showStatus('statsStatus', '✗ ' + friendlyError(err), 'error');
+  }
+});
+
+// ---------- Kooperation: Partner ----------
+function httpsOrEmpty(value) {
+  const v = value.trim();
+  if (!v) return '';
+  try {
+    const u = new URL(v);
+    return u.protocol === 'https:' ? u.href.slice(0, 300) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+$('addPartnerBtn').addEventListener('click', async () => {
+  const name = $('partnerName').value.trim();
+  const url = httpsOrEmpty($('partnerUrl').value);
+  const logo = httpsOrEmpty($('partnerLogo').value);
+  if (!name) { showStatus('partnerStatus', 'Bitte einen Namen eintragen.', 'error'); return; }
+  if (url === null || logo === null) { showStatus('partnerStatus', 'Links müssen mit https:// beginnen.', 'error'); return; }
+  try {
+    await db.collection('partners').add({
+      name: name.slice(0, 80),
+      category: $('partnerCategory').value.trim().slice(0, 60),
+      url: url,
+      logo: logo,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showStatus('partnerStatus', '✓ Partner hinzugefügt', 'success');
+    ['partnerName', 'partnerCategory', 'partnerUrl', 'partnerLogo'].forEach((id) => { $(id).value = ''; });
+    loadPartners();
+  } catch (err) {
+    console.error(err);
+    showStatus('partnerStatus', '✗ ' + friendlyError(err), 'error');
+  }
+});
+
+async function loadPartners() {
+  const list = $('partnerList');
+  try {
+    const snap = await db.collection('partners').get();
+    if (snap.empty) { list.replaceChildren(emptyNote('Noch keine Partner')); return; }
+    list.replaceChildren(...snap.docs.map((doc) => {
+      const d = doc.data();
+      return buildItem(String(d.name || ''), String(d.category || '') + (d.url ? ' • ' + d.url : ''), () => deleteDoc('partners', doc.id, loadPartners));
+    }));
+  } catch (err) {
+    console.error(err);
+    list.replaceChildren(emptyNote('Partner konnten nicht geladen werden.'));
+  }
+}
 
 // ---------- Tabs ----------
 document.querySelectorAll('.tab').forEach((tab) => {
