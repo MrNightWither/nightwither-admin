@@ -19,7 +19,6 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 const $ = (id) => document.getElementById(id);
-const DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 const EVENT_TYPES = ['tournament', 'verlosung', 'community', 'stream', 'challenge', 'sonstiges'];
 
 // ---------- Anmeldung ----------
@@ -155,25 +154,48 @@ async function loadEvents() {
 }
 
 // ---------- Streaming Plan ----------
+// Ein Stream gilt 6 Stunden nach Beginn als vorbei
+const STREAM_KEEP_MS = 6 * 60 * 60 * 1000;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function formatStreamDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return 'Ohne Datum';
+  return d.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) +
+    ' • ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+}
+
 $('addStreamBtn').addEventListener('click', async () => {
-  const day = $('streamDay').value;
-  const time = $('streamTime').value;
+  const raw = $('streamDate').value;
   const game = $('streamGame').value.trim();
-  if (!DAYS.includes(day) || !/^\d{2}:\d{2}$/.test(time) || !game) {
-    showStatus('streamStatus', 'Bitte Tag, Uhrzeit und Spiel ausfüllen.', 'error');
+  const start = new Date(raw);
+  const repeat = Math.min(8, Math.max(1, parseInt($('streamRepeat').value, 10) || 1));
+  if (!raw || isNaN(start) || !game) {
+    showStatus('streamStatus', 'Bitte Datum, Uhrzeit und Spiel ausfüllen.', 'error');
+    return;
+  }
+  if (start.getTime() + STREAM_KEEP_MS < Date.now()) {
+    showStatus('streamStatus', 'Das Datum liegt in der Vergangenheit.', 'error');
     return;
   }
   try {
-    await db.collection('streamingplan').add({
-      day: day,
-      time: time,
-      game: game.slice(0, 80),
-      platform: $('streamPlatform').value.trim().slice(0, 40),
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    showStatus('streamStatus', '✓ Stream hinzugefügt', 'success');
+    const batch = db.batch();
+    for (let i = 0; i < repeat; i++) {
+      // Wöchentlich wiederholen, Uhrzeit bleibt auch bei Zeitumstellung gleich
+      const d = new Date(start);
+      d.setDate(d.getDate() + i * 7);
+      batch.set(db.collection('streamingplan').doc(), {
+        streamDate: d.toISOString(),
+        game: game.slice(0, 80),
+        platform: $('streamPlatform').value.trim().slice(0, 40),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    await batch.commit();
+    showStatus('streamStatus', repeat > 1 ? `✓ ${repeat} Streams geplant` : '✓ Stream geplant', 'success');
     $('streamGame').value = '';
     $('streamPlatform').value = '';
+    $('streamRepeat').value = '1';
     loadStreams();
   } catch (err) {
     console.error(err);
@@ -185,12 +207,35 @@ async function loadStreams() {
   const list = $('streamList');
   try {
     const snap = await db.collection('streamingplan').get();
-    const streams = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    streams.sort((a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day));
-    if (!streams.length) { list.replaceChildren(emptyNote('Kein Streaming Plan')); return; }
-    list.replaceChildren(...streams.map((s) =>
-      buildItem(String(s.day || '') + ' • ' + String(s.time || ''),
-                String(s.game || '') + ' • ' + String(s.platform || ''),
+    const now = Date.now();
+    const upcoming = [];
+    const expired = [];
+
+    snap.docs.forEach((doc) => {
+      const s = { id: doc.id, ...doc.data() };
+      const t = new Date(s.streamDate).getTime();
+      if (!isNaN(t) && t + STREAM_KEEP_MS < now) expired.push(doc.ref);
+      else upcoming.push(s);
+    });
+
+    // Vergangene Streams automatisch löschen
+    if (expired.length) {
+      const batch = db.batch();
+      expired.slice(0, 400).forEach((ref) => batch.delete(ref));
+      await batch.commit();
+    }
+
+    // Nächster Stream oben, alte Einträge ohne Datum ganz unten
+    upcoming.sort((a, b) => {
+      const ta = new Date(a.streamDate).getTime();
+      const tb = new Date(b.streamDate).getTime();
+      return (isNaN(ta) ? Infinity : ta) - (isNaN(tb) ? Infinity : tb);
+    });
+
+    if (!upcoming.length) { list.replaceChildren(emptyNote('Keine Streams geplant')); return; }
+    list.replaceChildren(...upcoming.map((s) =>
+      buildItem(s.streamDate ? formatStreamDate(s.streamDate) : 'Alter Eintrag ohne Datum (' + String(s.day || '') + ')',
+                String(s.game || '') + (s.platform ? ' • ' + s.platform : ''),
                 () => deleteDoc('streamingplan', s.id, loadStreams))
     ));
   } catch (err) {

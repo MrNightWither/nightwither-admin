@@ -343,21 +343,24 @@
 
     <div id="streaming" class="tab-content">
       <div class="form-section">
-        <h3>Stream hinzufügen</h3>
+        <h3>Stream planen</h3>
+        <p class="hint">Vergangene Streams verschwinden 6 Stunden nach Beginn von der Eventseite und werden hier automatisch gelöscht.</p>
         <div class="form-grid">
-          <select id="streamDay" class="form-input">
-            <option>Montag</option><option>Dienstag</option><option>Mittwoch</option>
-            <option>Donnerstag</option><option>Freitag</option><option>Samstag</option><option>Sonntag</option>
-          </select>
-          <input type="time" id="streamTime" class="form-input" />
+          <input type="datetime-local" id="streamDate" class="form-input" aria-label="Datum und Uhrzeit" />
           <input type="text" id="streamGame" class="form-input" placeholder="Spiel" maxlength="80" />
           <input type="text" id="streamPlatform" class="form-input" placeholder="Plattform" maxlength="40" />
+          <select id="streamRepeat" class="form-input" aria-label="Wiederholen">
+            <option value="1">Einmalig</option>
+            <option value="2">Wöchentlich, 2 Wochen</option>
+            <option value="4">Wöchentlich, 4 Wochen</option>
+            <option value="8">Wöchentlich, 8 Wochen</option>
+          </select>
         </div>
-        <button class="submit-btn" id="addStreamBtn" type="button">Stream hinzufügen</button>
+        <button class="submit-btn" id="addStreamBtn" type="button">Stream planen</button>
         <div id="streamStatus" class="status-message hidden" role="status"></div>
       </div>
       <div>
-        <h3 class="list-title">Streaming Plan</h3>
+        <h3 class="list-title">Geplante Streams</h3>
         <div id="streamList" class="items-list"></div>
       </div>
     </div>
