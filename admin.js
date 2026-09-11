@@ -51,6 +51,7 @@ auth.onAuthStateChanged((user) => {
     loadStreams();
     loadStats();
     loadPartners();
+    loadSecretsState();
   } else {
     if (user) {
       const uid = user.uid;
@@ -272,6 +273,42 @@ async function setLiveStatus(isLive) {
 }
 $('liveOnBtn').addEventListener('click', () => setLiveStatus(true));
 $('liveOffBtn').addEventListener('click', () => setLiveStatus(false));
+
+// ---------- Geheime Rabattcodes ----------
+// Schaltet die beiden versteckten Codes auf der Linkseite. Die Linkseite liest
+// status/secrets.active oeffentlich. Fehlt das Dokument, bleiben die Codes aktiv,
+// damit ein nie angelegtes Dokument das Feature nicht stillschweigend abschaltet.
+async function loadSecretsState() {
+  const el = $('secretsCurrent');
+  try {
+    const doc = await db.collection('status').doc('secrets').get();
+    if (!doc.exists) {
+      el.textContent = 'Aktuell: aktiv (noch nie umgeschaltet)';
+      return;
+    }
+    el.textContent = doc.data().active === false ? 'Aktuell: aus' : 'Aktuell: aktiv';
+  } catch (err) {
+    console.error(err);
+    el.textContent = 'Status konnte nicht geladen werden.';
+  }
+}
+
+async function setSecrets(active) {
+  try {
+    await db.collection('status').doc('secrets').set({
+      active: active,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: 'admin'
+    });
+    showStatus('secretsStatus', active ? '✓ Secrets aktiv' : '✓ Secrets aus', 'success');
+    loadSecretsState();
+  } catch (err) {
+    console.error(err);
+    showStatus('secretsStatus', '✗ ' + friendlyError(err), 'error');
+  }
+}
+$('secretsOnBtn').addEventListener('click', () => setSecrets(true));
+$('secretsOffBtn').addEventListener('click', () => setSecrets(false));
 
 // ---------- Kooperation: Reichweite ----------
 const STAT_FIELDS = { tiktok: 'statTiktok', twitch: 'statTwitch', youtube: 'statYoutube', instagram: 'statInstagram' };

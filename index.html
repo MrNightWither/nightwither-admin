@@ -285,7 +285,8 @@
   .hint { margin-bottom: 16px; color: var(--muted); }
   .live-row { display: flex; gap: 10px; }
   .btn-live { background: rgba(34,197,94,0.8); }
-  .btn-offline { background: rgba(107,114,128,0.8); }
+  /* Schwarze Schrift auf dem Grau kam nur auf 3,3:1. Weiss erreicht 6,3:1. */
+  .btn-offline { background: rgba(107,114,128,0.8); color: #fff; }
   .list-title { margin-bottom: 16px; }
   .hidden { display: none; }
   button:focus-visible, .form-input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
@@ -374,6 +375,17 @@
           <button class="submit-btn btn-offline" id="liveOffBtn" type="button">⚪ OFFLINE</button>
         </div>
         <div id="liveStatus" class="status-message hidden" role="status"></div>
+      </div>
+
+      <div class="form-section">
+        <h3>Geheime Rabattcodes</h3>
+        <p class="hint">Steuert beide Secrets auf der Linkseite. Sobald ein Code eingelöst ist, hier auf Aus stellen – dann verschwinden sie sofort für alle Besucher.</p>
+        <div class="live-row">
+          <button class="submit-btn btn-live" id="secretsOnBtn" type="button">Aktiv</button>
+          <button class="submit-btn btn-offline" id="secretsOffBtn" type="button">Aus</button>
+        </div>
+        <p class="hint" id="secretsCurrent">Status wird geladen …</p>
+        <div id="secretsStatus" class="status-message hidden" role="status"></div>
       </div>
     </div>
     <div id="kooperation" class="tab-content">
