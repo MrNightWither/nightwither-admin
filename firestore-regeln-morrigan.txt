@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Wer ist wer ----------
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == "6DlcOUvr9qhNWgWWRtnrIQriQoi2";
+    }
+    function isStreamerbot() {
+      return request.auth != null && request.auth.uid == "STREAMERBOT_UID_HIER_EINTRAGEN";
+    }
+    // 🐦‍⬛ Morrígan (eigenes Konto nwu.morrigan@gmail.com, 29.09.2026):
+    //    darf NUR Streamplan + Events anlegen und löschen – nie bearbeiten, nie etwas anderes.
+    function isMorrigan() {
+      return request.auth != null && request.auth.uid == "nnnW77gVUROVEi7jHj36oize84J2";
+    }
+    function text(v, maxLen) {
+      return v is string && v.size() <= maxLen;
+    }
+    function data() {
+      return request.resource.data;
+    }
+
+    // ---------- Events: alle lesen, du schreibst, Morrígan nur anlegen/löschen ----------
+    match /events/{eventId} {
+      allow read: if true;
+      allow delete: if isAdmin() || isMorrigan();
+      allow create: if (isAdmin() || isMorrigan())
+        && data().keys().hasOnly(['title', 'type', 'eventDate', 'prizePool', 'description', 'createdAt', 'webhook', 'quelle'])
+        && text(data().title, 120) && data().title.size() > 0
+        && data().type in ['tournament', 'verlosung', 'community', 'stream', 'challenge', 'sonstiges']
+        && text(data().eventDate, 40)
+        && text(data().prizePool, 120)
+        && text(data().description, 2000)
+        && (data().createdAt == request.time || text(data().createdAt, 40))
+        && (!('webhook' in data()) || data().webhook in ['tournament', 'allgemein', 'none', ''])
+        && (!('quelle' in data()) || data().quelle == 'Morrigan');
+    }
+
+    // ---------- Streaming Plan: alle lesen, du schreibst, Morrígan nur anlegen/löschen ----------
+    match /streamingplan/{streamId} {
+      allow read: if true;
+      allow delete: if isAdmin() || isMorrigan();
+      // du (Admin Panel) – unverändert
+      allow create: if isAdmin()
+        && data().keys().hasOnly(['streamDate', 'game', 'platform', 'createdAt'])
+        && text(data().streamDate, 40) && data().streamDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*')
+        && text(data().game, 80) && data().game.size() > 0
+        && text(data().platform, 40)
+        && data().createdAt == request.time;
+      // Morrígan – gleiche Prüfungen, createdAt als Text, mit Kennzeichen „quelle“
+      allow create: if isMorrigan()
+        && data().keys().hasOnly(['streamDate', 'game', 'platform', 'createdAt', 'quelle'])
+        && text(data().streamDate, 40) && data().streamDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*')
+        && text(data().game, 80) && data().game.size() > 0
+        && text(data().platform, 40)
+        && text(data().createdAt, 40)
+        && data().quelle == 'Morrigan';
+    }
+
+    // ---------- Status: alle lesen, Schreibrechte je nach Dokument (Morrígan: KEIN Zugriff) ----------
+    match /status/{docId} {
+      allow read: if true;
+
+      // Live Status: du und Streamer.bot
+      allow write: if docId == 'twitch'
+        && (isAdmin() || isStreamerbot())
+        && data().keys().hasOnly(['isLive', 'updatedAt', 'updatedBy'])
+        && data().isLive is bool;
+
+      // Geheime Rabattcodes auf der Linkseite: nur du
+      allow write: if docId == 'secrets'
+        && isAdmin()
+        && data().keys().hasOnly(['active', 'updatedAt', 'updatedBy'])
+        && data().active is bool;
+    }
+
+    // ---------- Kooperation: Partner, alle lesen, nur du schreibst ----------
+    match /partners/{partnerId} {
+      allow read: if true;
+      allow delete: if isAdmin();
+      allow create: if isAdmin()
+        && data().keys().hasOnly(['name', 'category', 'url', 'logo', 'createdAt'])
+        && text(data().name, 80) && data().name.size() > 0
+        && text(data().category, 60)
+        && text(data().url, 300) && (data().url == '' || data().url.matches('^https://.+'))
+        && text(data().logo, 300) && (data().logo == '' || data().logo.matches('^https://.+'))
+        && data().createdAt == request.time;
+    }
+
+    // ---------- Kooperation: Reichweite, alle lesen, nur du schreibst ----------
+    match /stats/{docId} {
+      allow read: if true;
+      allow write: if isAdmin() && docId == 'social'
+        && data().keys().hasOnly(['tiktok', 'twitch', 'youtube', 'instagram', 'updatedAt'])
+        && text(data().tiktok, 12) && text(data().twitch, 12)
+        && text(data().youtube, 12) && text(data().instagram, 12);
+    }
+
+    // Alles, was hier nicht steht, ist automatisch gesperrt.
+  }
+}

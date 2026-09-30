@@ -1,0 +1,3 @@
+# Internes Admin-Panel – nicht für Suchmaschinen oder KI-Crawler.
+User-agent: *
+Disallow: /
