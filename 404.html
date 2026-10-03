@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Seite nicht gefunden · Admin</title>
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/png" href="https://nightwither.de/favicon-32.png">
+<style>
+  /* 404 für alle NightWither-Seiten – alles absolut verlinkt, weil GitHub diese Seite unter jedem kaputten Pfad zeigt */
+  @font-face { font-family: 'Rajdhani'; font-weight: 700; font-display: swap; src: url('https://nightwither.de/fonts/rajdhani-700.woff') format('woff'); }
+  @font-face { font-family: 'Inter'; font-weight: 400; font-display: swap; src: url('https://nightwither.de/fonts/inter-400.woff') format('woff'); }
+  :root { --gold: #c9a84c; --gold-hi: #f0d080; --bone: #edeae2; --ash: #9a948a; --blut: #8b1424; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: radial-gradient(ellipse at 50% 35%, #1a0a0d 0%, #070708 55%, #000 100%); color: var(--bone); font-family: 'Inter', system-ui, sans-serif;
+         display: flex; align-items: center; justify-content: center; text-align: center; padding: 32px 16px; overflow: hidden; }
+  .buehne { position: relative; z-index: 2; max-width: 560px; }
+  .krone { width: 92px; height: auto; filter: drop-shadow(0 0 22px rgba(201,168,76,.45)); animation: schweben 5s ease-in-out infinite; }
+  .zahl { font-family: 'Rajdhani', 'Arial Narrow', sans-serif; font-weight: 700; font-size: clamp(5.5rem, 26vw, 10rem); line-height: .9; letter-spacing: .06em; margin: 14px 0 6px;
+          background: linear-gradient(180deg, var(--gold-hi) 0%, var(--gold) 45%, #6b4d17 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+          text-shadow: 0 0 40px rgba(201,168,76,.18); animation: flackern 6s infinite; }
+  h1 { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: clamp(1.3rem, 5vw, 1.75rem); letter-spacing: .08em; text-transform: uppercase; color: var(--bone); }
+  p { color: var(--ash); margin: 12px auto 0; max-width: 440px; line-height: 1.6; font-size: .98rem; }
+  .knoepfe { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 28px; }
+  .knoepfe a { font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; font-size: .95rem; text-decoration: none;
+               padding: 12px 22px; border-radius: 8px; border: 1px solid rgba(201,168,76,.45); color: var(--gold); transition: background .2s, color .2s, border-color .2s; }
+  .knoepfe a:hover, .knoepfe a:focus-visible { background: rgba(201,168,76,.12); border-color: var(--gold); outline: none; }
+  .knoepfe a.haupt { background: var(--gold); color: #000; border-color: var(--gold); }
+  .knoepfe a.haupt:hover, .knoepfe a.haupt:focus-visible { background: var(--gold-hi); }
+  .rabe { margin-top: 26px; font-size: .8rem; letter-spacing: .25em; text-transform: uppercase; color: #5e5a54; }
+  /* Glut: aufsteigende Funken, nur CSS */
+  .glut { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+  .glut i { position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%; background: var(--gold-hi); box-shadow: 0 0 8px 2px rgba(240,160,64,.6); opacity: 0; animation: steigen linear infinite; }
+  .glut i:nth-child(1)  { left: 8%;  animation-duration: 9s;  animation-delay: 0s; }
+  .glut i:nth-child(2)  { left: 18%; animation-duration: 12s; animation-delay: 2s; }
+  .glut i:nth-child(3)  { left: 27%; animation-duration: 8s;  animation-delay: 4s; background: #e07a3c; }
+  .glut i:nth-child(4)  { left: 36%; animation-duration: 11s; animation-delay: 1s; }
+  .glut i:nth-child(5)  { left: 47%; animation-duration: 10s; animation-delay: 5s; background: #e07a3c; }
+  .glut i:nth-child(6)  { left: 56%; animation-duration: 13s; animation-delay: 3s; }
+  .glut i:nth-child(7)  { left: 64%; animation-duration: 9s;  animation-delay: 6s; }
+  .glut i:nth-child(8)  { left: 73%; animation-duration: 12s; animation-delay: .5s; background: #e07a3c; }
+  .glut i:nth-child(9)  { left: 82%; animation-duration: 10s; animation-delay: 2.5s; }
+  .glut i:nth-child(10) { left: 91%; animation-duration: 14s; animation-delay: 4.5s; }
+  @keyframes steigen { 0% { transform: translate(0, 0) scale(1); opacity: 0; } 10% { opacity: .9; } 70% { opacity: .5; } 100% { transform: translate(40px, -105vh) scale(.3); opacity: 0; } }
+  @keyframes schweben { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes flackern { 0%, 92%, 100% { opacity: 1; } 93% { opacity: .55; } 94% { opacity: 1; } 96% { opacity: .7; } 97% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .krone, .zahl, .glut i { animation: none; } .glut { display: none; } }
+</style>
+</head>
+<body>
+<div class="glut" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<main class="buehne">
+  <img class="krone" src="https://shop.nightwither.de/crown.webp" alt="" width="261" height="287">
+  <div class="zahl" aria-hidden="true">404</div>
+  <h1>Die Dunkelheit hat diese Seite verschluckt</h1>
+  <p>Selbst der Rabe findet hier nichts. Vielleicht war der Link verflucht – oder die Seite ist weitergezogen.</p>
+  <nav class="knoepfe" aria-label="Weiter">
+    <a class="haupt" href="https://admin.nightwither.de">Zum Admin Panel</a>
+    <a href="https://nightwither.de">Alle Kanäle</a>
+  </nav>
+  <div class="rabe">NightWither Unity</div>
+</main>
+</body>
+</html>
