@@ -52,6 +52,7 @@ auth.onAuthStateChanged((user) => {
     loadStats();
     loadPartners();
     loadSecretsState();
+    liveStandLaden();
   } else {
     if (user) {
       const uid = user.uid;
@@ -257,22 +258,68 @@ async function deleteDoc(collection, id, reload) {
   }
 }
 
-// ---------- Live Status ----------
-async function setLiveStatus(isLive) {
+// ---------- Live je Plattform ----------
+// Automatisch: Streamer.bot meldet dem Worker, wo gerade live ist (GET /live → plattformen).
+// Notfall: eigener Schalter je Plattform in Firestore status/plattformen (gilt im Worker höchstens 8 Std.).
+const LIVE_URL = 'https://nwu-anmeldung.nwu-brand.workers.dev/live';
+const PLATTFORM_NAMEN = { twitch: '🟣 Twitch', kick: '🟢 Kick', youtube: '▶️ YouTube', tiktok: '🎵 TikTok' };
+let notfallStand = { twitch: false, kick: false, youtube: false, tiktok: false };
+
+async function liveStandLaden() {
+  const liste = $('plattformListe');
+  if (!liste) return;
+  let auto = {};
   try {
-    await db.collection('status').doc('twitch').set({
-      isLive: isLive,
+    const res = await fetch(LIVE_URL, { cache: 'no-store', credentials: 'omit' });
+    if (res.ok) auto = (await res.json()).plattformen || {};
+  } catch (e) { /* Worker nicht erreichbar: nur Notfall-Stand zeigen */ }
+  try {
+    const doc = await db.collection('status').doc('plattformen').get();
+    if (doc.exists) {
+      const d = doc.data();
+      const zeit = d.updatedAt && d.updatedAt.toMillis ? d.updatedAt.toMillis() : 0;
+      const frisch = Date.now() - zeit < 8 * 3600000;
+      Object.keys(notfallStand).forEach((p) => { notfallStand[p] = frisch && d[p] === true; });
+    }
+  } catch (e) { console.error(e); }
+  liste.innerHTML = '';
+  Object.keys(PLATTFORM_NAMEN).forEach((p) => {
+    const zeile = document.createElement('div');
+    zeile.className = 'plattform-zeile' + (auto[p] ? ' ist-live' : '');
+    const name = document.createElement('span');
+    name.className = 'plattform-name';
+    name.textContent = PLATTFORM_NAMEN[p];
+    const status = document.createElement('span');
+    status.className = 'plattform-auto';
+    status.innerHTML = auto[p] ? '<b>● live</b>' + (notfallStand[p] ? ' (Notfall)' : '') : 'offline';
+    const knopf = document.createElement('button');
+    knopf.type = 'button';
+    knopf.className = 'submit-btn ' + (notfallStand[p] ? 'btn-notfall-an' : 'btn-offline');
+    knopf.textContent = notfallStand[p] ? 'Notfall: AN' : 'Notfall: aus';
+    knopf.addEventListener('click', () => notfallSetzen({ ...notfallStand, [p]: !notfallStand[p] }));
+    zeile.append(name, status, knopf);
+    liste.appendChild(zeile);
+  });
+}
+
+async function notfallSetzen(neu) {
+  try {
+    await db.collection('status').doc('plattformen').set({
+      twitch: neu.twitch === true, kick: neu.kick === true, youtube: neu.youtube === true, tiktok: neu.tiktok === true,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       updatedBy: 'admin'
     });
-    showStatus('liveStatus', isLive ? '✓ 🔴 LIVE' : '✓ ⚪ OFFLINE', 'success');
+    notfallStand = neu;
+    showStatus('liveStatus', '✓ Gespeichert – Webseiten zeigen es innerhalb von 1 Minute', 'success');
+    setTimeout(liveStandLaden, 1500);
   } catch (err) {
     console.error(err);
     showStatus('liveStatus', '✗ ' + friendlyError(err), 'error');
   }
 }
-$('liveOnBtn').addEventListener('click', () => setLiveStatus(true));
-$('liveOffBtn').addEventListener('click', () => setLiveStatus(false));
+$('notfallAllesAusBtn').addEventListener('click', () => notfallSetzen({ twitch: false, kick: false, youtube: false, tiktok: false }));
+$('liveNeuLadenBtn').addEventListener('click', liveStandLaden);
+document.querySelectorAll('.tab[data-tab="livestatus"]').forEach((t) => t.addEventListener('click', liveStandLaden));
 
 // ---------- Geheime Rabattcodes ----------
 // Schaltet die beiden versteckten Codes auf der Linkseite. Die Linkseite liest

@@ -68,6 +68,12 @@ service cloud.firestore {
         && data().keys().hasOnly(['isLive', 'updatedAt', 'updatedBy'])
         && data().isLive is bool;
 
+      // Live je Plattform – Notfall-Schalter im Admin Panel (06.10.2026): nur du
+      allow write: if docId == 'plattformen'
+        && isAdmin()
+        && data().keys().hasOnly(['twitch', 'kick', 'youtube', 'tiktok', 'updatedAt', 'updatedBy'])
+        && data().twitch is bool && data().kick is bool && data().youtube is bool && data().tiktok is bool;
+
       // Geheime Rabattcodes auf der Linkseite: nur du
       allow write: if docId == 'secrets'
         && isAdmin()
