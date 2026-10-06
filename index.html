@@ -205,6 +205,22 @@
     margin-bottom: 20px;
   }
 
+  /* Streamplan: Spiel + Plattform zum Antippen (06.10.2026) */
+  .wahl-block { margin-bottom: 18px; }
+  .wahl-titel { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .wahl-titel span { text-transform: none; letter-spacing: 0; }
+  .chip-reihe { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { position: relative; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font: inherit; font-size: 0.95rem; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+  .chip:hover { border-color: rgba(201,168,76,0.5); }
+  .chip.an { background: rgba(201,168,76,0.16); border-color: var(--gold); color: #f1dc9a; font-weight: 600; }
+  .chip.plus { border-style: dashed; color: var(--muted); }
+  .chip .weg { margin-left: 8px; padding: 0 2px; color: var(--muted); font-weight: 400; }
+  .chip .weg:hover { color: #fca5a5; }
+  .chip-neu { display: flex; gap: 8px; margin-top: 10px; }
+  .chip-neu .form-input { flex: 1; }
+  .chip-ok { padding: 0 18px; border-radius: 8px; border: 1px solid var(--gold); background: transparent; color: var(--gold); font: inherit; font-weight: 600; cursor: pointer; }
+
   .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -354,10 +370,20 @@
       <div class="form-section">
         <h3>Stream planen</h3>
         <p class="hint">Vergangene Streams verschwinden 6 Stunden nach Beginn von der Eventseite und werden hier automatisch gelöscht.</p>
+        <div class="wahl-block">
+          <div class="wahl-titel">Spiel</div>
+          <div id="spielWahl" class="chip-reihe" role="radiogroup" aria-label="Spiel"></div>
+          <div id="spielNeu" class="chip-neu hidden">
+            <input type="text" id="spielNeuText" class="form-input" placeholder="Neues Spiel" maxlength="80" />
+            <button type="button" id="spielNeuOk" class="chip-ok">Hinzufügen</button>
+          </div>
+        </div>
+        <div class="wahl-block">
+          <div class="wahl-titel">Plattform <span>(mehrere möglich)</span></div>
+          <div id="plattformWahl" class="chip-reihe" role="group" aria-label="Plattform"></div>
+        </div>
         <div class="form-grid">
           <input type="datetime-local" id="streamDate" class="form-input" aria-label="Datum und Uhrzeit" />
-          <input type="text" id="streamGame" class="form-input" placeholder="Spiel" maxlength="80" />
-          <input type="text" id="streamPlatform" class="form-input" placeholder="Plattform" maxlength="40" />
           <select id="streamRepeat" class="form-input" aria-label="Wiederholen">
             <option value="1">Einmalig</option>
             <option value="2">Wöchentlich, 2 Wochen</option>

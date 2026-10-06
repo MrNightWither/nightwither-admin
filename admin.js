@@ -167,13 +167,89 @@ function formatStreamDate(iso) {
     ' • ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 
+// ---------- Streamplan: Spiel + Plattform zum Antippen ----------
+// Standard-Spiele + alles, was schon im Plan steht + eigene (in diesem Browser gespeichert).
+const STANDARD_SPIELE = ['Warzone', 'The Coffin of Andy&Laylay', 'Find the Needle', 'Just Chatting'];
+const PLATTFORMEN = ['Twitch', 'Kick', 'YouTube', 'TikTok'];
+const EIGENE_SPIELE_KEY = 'nwu-admin-eigene-spiele';
+let gewaehltesSpiel = '';
+let gewaehltePlattformen = ['Twitch'];
+let spieleAusPlan = [];
+
+function eigeneSpiele() {
+  try { return JSON.parse(localStorage.getItem(EIGENE_SPIELE_KEY) || '[]').filter((s) => typeof s === 'string'); } catch { return []; }
+}
+function eigeneSpieleSpeichern(liste) {
+  try { localStorage.setItem(EIGENE_SPIELE_KEY, JSON.stringify(liste.slice(0, 40))); } catch { /* privater Modus – dann nur für jetzt */ }
+}
+function alleSpiele() {
+  const gesehen = new Set(), liste = [];
+  [...STANDARD_SPIELE, ...spieleAusPlan, ...eigeneSpiele()].forEach((s) => {
+    const k = s.trim().toLowerCase();
+    if (k && !gesehen.has(k)) { gesehen.add(k); liste.push(s.trim()); }
+  });
+  return liste;
+}
+function chip(text, an, onClick) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'chip' + (an ? ' an' : '');
+  b.textContent = text;
+  b.setAttribute('aria-pressed', an ? 'true' : 'false');
+  b.addEventListener('click', onClick);
+  return b;
+}
+function spielWahlZeigen() {
+  const eigene = eigeneSpiele().map((s) => s.toLowerCase());
+  const plus = chip('+ Weiteres', false, () => { $('spielNeu').classList.toggle('hidden'); $('spielNeuText').focus(); });
+  plus.classList.add('plus');
+  $('spielWahl').replaceChildren(...alleSpiele().map((s) => {
+    const b = chip(s, s === gewaehltesSpiel, () => { gewaehltesSpiel = s; spielWahlZeigen(); });
+    if (eigene.includes(s.toLowerCase()) && !STANDARD_SPIELE.includes(s)) {
+      const x = document.createElement('span');
+      x.className = 'weg';
+      x.textContent = '×';
+      x.title = 'Aus der Liste entfernen';
+      x.addEventListener('click', (e) => {
+        e.stopPropagation();
+        eigeneSpieleSpeichern(eigeneSpiele().filter((n) => n.toLowerCase() !== s.toLowerCase()));
+        if (gewaehltesSpiel === s) gewaehltesSpiel = '';
+        spielWahlZeigen();
+      });
+      b.appendChild(x);
+    }
+    return b;
+  }), plus);
+}
+function plattformWahlZeigen() {
+  $('plattformWahl').replaceChildren(...PLATTFORMEN.map((p) => chip(p, gewaehltePlattformen.includes(p), () => {
+    gewaehltePlattformen = gewaehltePlattformen.includes(p)
+      ? gewaehltePlattformen.filter((x) => x !== p)
+      : PLATTFORMEN.filter((x) => x === p || gewaehltePlattformen.includes(x));
+    plattformWahlZeigen();
+  })));
+}
+function spielHinzufuegen() {
+  const neu = $('spielNeuText').value.trim().slice(0, 80);
+  if (!neu) return;
+  if (!alleSpiele().some((s) => s.toLowerCase() === neu.toLowerCase())) eigeneSpieleSpeichern([...eigeneSpiele(), neu]);
+  gewaehltesSpiel = alleSpiele().find((s) => s.toLowerCase() === neu.toLowerCase()) || neu;
+  $('spielNeuText').value = '';
+  $('spielNeu').classList.add('hidden');
+  spielWahlZeigen();
+}
+$('spielNeuOk').addEventListener('click', spielHinzufuegen);
+$('spielNeuText').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); spielHinzufuegen(); } });
+spielWahlZeigen();
+plattformWahlZeigen();
+
 $('addStreamBtn').addEventListener('click', async () => {
   const raw = $('streamDate').value;
-  const game = $('streamGame').value.trim();
+  const game = gewaehltesSpiel.trim();
   const start = new Date(raw);
   const repeat = Math.min(8, Math.max(1, parseInt($('streamRepeat').value, 10) || 1));
   if (!raw || isNaN(start) || !game) {
-    showStatus('streamStatus', 'Bitte Datum, Uhrzeit und Spiel ausfüllen.', 'error');
+    showStatus('streamStatus', 'Bitte Datum, Uhrzeit und ein Spiel auswählen.', 'error');
     return;
   }
   if (start.getTime() + STREAM_KEEP_MS < Date.now()) {
@@ -189,14 +265,14 @@ $('addStreamBtn').addEventListener('click', async () => {
       batch.set(db.collection('streamingplan').doc(), {
         streamDate: d.toISOString(),
         game: game.slice(0, 80),
-        platform: $('streamPlatform').value.trim().slice(0, 40),
+        platform: gewaehltePlattformen.join(' / ').slice(0, 40),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
     await batch.commit();
     showStatus('streamStatus', repeat > 1 ? `✓ ${repeat} Streams geplant` : '✓ Stream geplant', 'success');
-    $('streamGame').value = '';
-    $('streamPlatform').value = '';
+    gewaehltesSpiel = '';
+    spielWahlZeigen();
     $('streamRepeat').value = '1';
     loadStreams();
   } catch (err) {
@@ -226,6 +302,10 @@ async function loadStreams() {
       expired.slice(0, 400).forEach((ref) => batch.delete(ref));
       await batch.commit();
     }
+
+    // Spiele aus dem Plan in die Auswahl übernehmen
+    spieleAusPlan = upcoming.map((s) => String(s.game || '').trim()).filter(Boolean);
+    spielWahlZeigen();
 
     // Nächster Stream oben, alte Einträge ohne Datum ganz unten
     upcoming.sort((a, b) => {
