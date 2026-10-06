@@ -220,6 +220,7 @@ function spielWahlZeigen() {
     }
     return b;
   }), plus);
+  titelZeigen();
 }
 function plattformWahlZeigen() {
   $('plattformWahl').replaceChildren(...PLATTFORMEN.map((p) => chip(p, gewaehltePlattformen.includes(p), () => {
@@ -228,6 +229,7 @@ function plattformWahlZeigen() {
       : PLATTFORMEN.filter((x) => x === p || gewaehltePlattformen.includes(x));
     plattformWahlZeigen();
   })));
+  titelZeigen();
 }
 function spielHinzufuegen() {
   const neu = $('spielNeuText').value.trim().slice(0, 80);
@@ -238,6 +240,100 @@ function spielHinzufuegen() {
   $('spielNeu').classList.add('hidden');
   spielWahlZeigen();
 }
+// ---------- Titel-Helfer: Vorschläge im NWU-Stil zum Kopieren ----------
+// Läuft komplett im Browser, schickt nichts weg. Längen-Grenzen je Plattform.
+const TITEL_GRENZE = { Twitch: 140, Kick: 140, YouTube: 100, TikTok: 32 };
+const TITEL_ANZAHL = 4;
+const TITEL_VORLAGEN = {
+  shooter: [
+    '👑 Der König droppt in {spiel} – Schatten, ladet nach!',
+    '☠ {spiel}: Heute fällt nur einer … und das bin nicht ich',
+    '{spiel} bis die Krone wackelt ⚔ Fluchkammer ist offen',
+    'Kronen-Jagd in {spiel} 🎯 Ihr verflucht, ich überlebe (vielleicht)',
+    '🩸 {spiel} mit dem König – jeder Kill gehört den Schatten',
+    'Ein König, ein Kreis, null Gnade 👑 {spiel}'
+  ],
+  horror: [
+    '🕯 {spiel} – die Schatten schauen zu',
+    'Der König hat Angst? Niemals. 😨 {spiel}',
+    'Licht aus, {spiel} an 🩸 Ihr dürft verfluchen',
+    '{spiel}: Wer schreit zuerst – ich oder der Chat? 👻',
+    '☠ {spiel} – heute wird die Krone blass'
+  ],
+  chatting: [
+    '☕ Just Chatting – der Thron ist offen, setzt euch',
+    'Schatten-Talk 🖤 Fragen, Unsinn & Pläne',
+    'Plauderei am Königshof 👑 Was liegt euch auf der Seele?',
+    'Der König hört zu 🕯 Erzählt mir alles',
+    'Ruhiger Abend mit den Schatten 🌙 Chat führt'
+  ],
+  standard: [
+    '👑 Heute: {spiel} – die Schatten sind wach',
+    '{spiel} mit dem König ⚔ Kanalpunkte = Chaos',
+    'Neues Spiel, alte Flüche: {spiel} 🩸',
+    '🕯 Die Schatten spielen {spiel} – kommt rein',
+    '{spiel} – der König gegen den Rest der Welt 👑'
+  ],
+  kurz: ['👑 {spiel} mit dem König', '☠ {spiel} live', '🖤 Schatten + {spiel}', '⚔ König spielt {spiel}']
+};
+const TITEL_ART = [
+  [/warzone|call of duty|cod|fortnite|apex|valorant|battlefield|pubg|shooter|cs2|counter/i, 'shooter'],
+  [/coffin|horror|phasmo|outlast|resident|silent hill|lethal|fnaf|scary|grusel/i, 'horror'],
+  [/chatting|talk|plaudern|quatschen/i, 'chatting']
+];
+let titelMischung = 0;
+
+function titelArt(spiel) {
+  const treffer = TITEL_ART.find(([muster]) => muster.test(spiel));
+  return treffer ? treffer[1] : 'standard';
+}
+function titelGrenze() {
+  return Math.min(...(gewaehltePlattformen.length ? gewaehltePlattformen : ['Twitch']).map((p) => TITEL_GRENZE[p] || 140));
+}
+function titelVorschlaege(spiel) {
+  const grenze = titelGrenze();
+  const vorlagen = grenze <= TITEL_GRENZE.TikTok ? TITEL_VORLAGEN.kurz : TITEL_VORLAGEN[titelArt(spiel)];
+  const start = (titelMischung * TITEL_ANZAHL) % vorlagen.length;
+  const liste = [];
+  for (let i = 0; i < Math.min(TITEL_ANZAHL, vorlagen.length); i++) liste.push(vorlagen[(start + i) % vorlagen.length].replace(/\{spiel\}/g, spiel));
+  return { liste, grenze };
+}
+function titelZeigen() {
+  const ziel = $('titelListe');
+  if (!ziel) return;
+  const spiel = gewaehltesSpiel.trim();
+  if (!spiel) {
+    const leer = document.createElement('div');
+    leer.className = 'titel-leer';
+    leer.textContent = 'Erst oben ein Spiel antippen – dann kommen Vorschläge.';
+    ziel.replaceChildren(leer);
+    return;
+  }
+  const { liste, grenze } = titelVorschlaege(spiel);
+  ziel.replaceChildren(...liste.map((t) => {
+    const zeile = document.createElement('div');
+    zeile.className = 'titel-vorschlag';
+    const text = document.createElement('span');
+    text.textContent = t;
+    const laenge = document.createElement('small');
+    const n = [...t].length;
+    laenge.textContent = n + '/' + grenze;
+    if (n > grenze) { laenge.classList.add('zulang'); laenge.title = 'Zu lang für eine der gewählten Plattformen'; }
+    const kopieren = document.createElement('button');
+    kopieren.type = 'button';
+    kopieren.className = 'chip-ok';
+    kopieren.textContent = 'Kopieren';
+    kopieren.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(t); kopieren.textContent = '✓ Kopiert'; }
+      catch { kopieren.textContent = 'Geht nicht – markieren'; }
+      setTimeout(() => { kopieren.textContent = 'Kopieren'; }, 1800);
+    });
+    zeile.append(text, laenge, kopieren);
+    return zeile;
+  }));
+}
+$('titelNeu').addEventListener('click', () => { titelMischung++; titelZeigen(); });
+
 $('spielNeuOk').addEventListener('click', spielHinzufuegen);
 $('spielNeuText').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); spielHinzufuegen(); } });
 spielWahlZeigen();

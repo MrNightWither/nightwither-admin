@@ -217,6 +217,16 @@
   .chip.plus { border-style: dashed; color: var(--muted); }
   .chip .weg { margin-left: 8px; padding: 0 2px; color: var(--muted); font-weight: 400; }
   .chip .weg:hover { color: #fca5a5; }
+  .titel-helfer { margin-top: 22px; }
+  .titel-helfer .wahl-titel { display: flex; align-items: center; gap: 10px; }
+  .titel-helfer .chip-ok { margin-left: auto; }
+  .titel-liste { display: grid; gap: 8px; }
+  .titel-vorschlag { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  .titel-vorschlag { flex-wrap: wrap; justify-content: flex-end; }
+  .titel-vorschlag span { flex: 1 1 100%; min-width: 0; overflow-wrap: anywhere; }
+  .titel-vorschlag small { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .titel-vorschlag small.zulang { color: #fca5a5; }
+  .titel-leer { color: var(--muted); font-size: 0.9em; }
   .chip-neu { display: flex; gap: 8px; margin-top: 10px; }
   .chip-neu .form-input { flex: 1; }
   .chip-ok { padding: 0 18px; border-radius: 8px; border: 1px solid var(--gold); background: transparent; color: var(--gold); font: inherit; font-weight: 600; cursor: pointer; }
@@ -393,6 +403,11 @@
         </div>
         <button class="submit-btn" id="addStreamBtn" type="button">Stream planen</button>
         <div id="streamStatus" class="status-message hidden" role="status"></div>
+        <div class="wahl-block titel-helfer">
+          <div class="wahl-titel">Titel-Helfer <span>(passend zu Spiel und Plattform)</span>
+            <button type="button" id="titelNeu" class="chip-ok">↻ Neu mischen</button></div>
+          <div id="titelListe" class="titel-liste"></div>
+        </div>
       </div>
       <div>
         <h3 class="list-title">Geplante Streams</h3>
